@@ -5,6 +5,8 @@
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
+#include <math.h>
+#include <FastTrig.h>
 
 Adafruit_MPU6050 mpu;
 
@@ -12,10 +14,15 @@ float aX, aY, aZ;
 float wX, wY, wZ;
 float oX, oY, oZ;
 
+float Kvel = M_PI/180;  // Convierto º/s a rad/s
+float Kpos = M_PI/180;
+
 float eaX, eaY, eaZ;
 float ewX, ewY, ewZ;
 int i=0;
 int samples=200;
+
+float roll,pitch,yaw;
 
 #define OFFSET_A_X  -0.03
 #define OFFSET_A_Y  -0.18
@@ -71,6 +78,10 @@ void loop() {
   oX = alpha*(oX+dt*wX) + beta*aX;
   oY = alpha*(oY+dt*wY) + beta*aY;
   oZ = alpha*(oZ+dt*wZ) + beta*aZ;
+
+  pitch= atan2(oX,oZ);
+  roll = atan2(oY,oZ);
+
   /* Print out the values */
   Serial.print(oX);
   Serial.print(",");
@@ -83,9 +94,12 @@ void loop() {
   Serial.print(wY);
   Serial.print(",");
   Serial.print(wZ);
+  Serial.print(", ");
+  Serial.print(pitch);
+  Serial.print(",");
+  Serial.print(roll);
   Serial.println("");
 
-  //x_a = a.acceleration.x-off
 
   delay(10);
 }
