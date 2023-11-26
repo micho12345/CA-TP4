@@ -8,6 +8,28 @@
 
 Adafruit_MPU6050 mpu;
 
+float aX, aY, aZ;
+float wX, wY, wZ;
+float oX, oY, oZ;
+
+float eaX, eaY, eaZ;
+float ewX, ewY, ewZ;
+int i=0;
+int samples=200;
+
+#define OFFSET_A_X  -0.03
+#define OFFSET_A_Y  -0.18
+#define OFFSET_A_Z  0.68
+
+#define OFFSET_W_X  -0.05
+#define OFFSET_W_Y  -0.02
+#define OFFSET_W_Z  -0.00
+
+float dt = 0.0262;
+float sT = 0.75;
+float alpha = (sT/dt)/(1+sT/dt);
+float beta = 1-alpha;
+
 void setup(void) {
   Serial.begin(115200);
   while (!Serial) {
@@ -25,6 +47,9 @@ void setup(void) {
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+  void calc_error();
+
   Serial.println("");
   delay(100);
 }
@@ -35,19 +60,69 @@ void loop() {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
+  aX = a.acceleration.x - OFFSET_A_X;
+  aY = a.acceleration.y - OFFSET_A_Y;
+  aZ = a.acceleration.z - OFFSET_A_Z;
+
+  wX = g.gyro.x - OFFSET_W_X;
+  wY = g.gyro.y - OFFSET_W_Y;
+  wZ = g.gyro.z - OFFSET_W_Z;
+
+  oX = alpha*(oX+dt*wX) + beta*aX;
+  oY = alpha*(oY+dt*wY) + beta*aY;
+  oZ = alpha*(oZ+dt*wZ) + beta*aZ;
   /* Print out the values */
-  Serial.print(a.acceleration.x);
+  Serial.print(oX);
   Serial.print(",");
-  Serial.print(a.acceleration.y);
+  Serial.print(oY);
   Serial.print(",");
-  Serial.print(a.acceleration.z);
+  Serial.print(oZ);
   Serial.print(", ");
-  Serial.print(g.gyro.x);
+  Serial.print(wX);
   Serial.print(",");
-  Serial.print(g.gyro.y);
+  Serial.print(wY);
   Serial.print(",");
-  Serial.print(g.gyro.z);
+  Serial.print(wZ);
   Serial.println("");
+
+  //x_a = a.acceleration.x-off
 
   delay(10);
 }
+
+void calc_error()
+{
+  eaX = 0;
+  eaY = 0;
+  eaZ = 0;
+
+  ewX = 0;
+  ewY = 0;
+  ewZ = 0;
+  while(i<samples)
+  {
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+
+    eaX += a.acceleration.x;
+    eaY += a.acceleration.y;
+    eaZ += a.acceleration.z;
+
+    ewX += g.gyro.x;
+    ewY += g.gyro.y;
+    ewZ += g.gyro.z;
+
+    i++;
+    delay(10);
+  }
+  eaX /= samples;
+  eaY /= samples;
+  eaZ /= samples;
+
+  ewX /= samples;
+  ewY /= samples;
+  ewZ /= samples;
+  
+}
+
+
