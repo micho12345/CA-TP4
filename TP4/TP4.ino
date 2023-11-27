@@ -20,7 +20,7 @@ float Kpos = M_PI/180;
 float eaX, eaY, eaZ;
 float ewX, ewY, ewZ;
 int i=0;
-int samples=2000;
+int samples=500;
 
 float roll,pitch,yaw;
 
@@ -103,23 +103,22 @@ void loop() {
   roll = atan2(oX,oZ);
 
   /* Print out the values */
+  Serial.print(aX);
+  Serial.print("\t");
   Serial.print(oX);
-  Serial.print("\t");
-  Serial.print(oY);
-  Serial.print("\t");
-  Serial.print(oZ);
-  Serial.print("\t");
-  Serial.print(wX);
-  Serial.print("\t");
-  Serial.print(wY);
-  Serial.print("\t");
-  Serial.print(wZ);
   Serial.print("\t");
   Serial.print(pitch);
   Serial.print("\t");
+  Serial.print(aY);
+  Serial.print("\t");
+  Serial.print(oY);
+  Serial.print("\t");
   Serial.print(roll);
+  Serial.print("\t");
+  Serial.print(-15);
+  Serial.print("\t");
+  Serial.print(15);
   Serial.println("");
-
 
   delay(10);
 }
