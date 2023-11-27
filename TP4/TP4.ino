@@ -20,7 +20,7 @@ float Kpos = M_PI/180;
 float eaX, eaY, eaZ;
 float ewX, ewY, ewZ;
 int i=0;
-int samples=200;
+int samples=2000;
 
 float roll,pitch,yaw;
 
@@ -42,6 +42,7 @@ void setup(void) {
   while (!Serial) {
     delay(10); // will pause Zero, Leonardo, etc until serial console opens
   }
+  Serial.println();
 
   // Try to initialize!
   if (!mpu.begin()) {
@@ -55,10 +56,17 @@ void setup(void) {
   mpu.setGyroRange(MPU6050_RANGE_250_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
-  void calc_error();
+  calc_error();
+
+  Serial.println("Parámetros del filtro complementario");
+  Serial.println("alpha\tbeta");
+  Serial.print(alpha);
+  Serial.print("\t");
+  Serial.print(beta);
+  Serial.println("\t");
 
   Serial.println("");
-  delay(100);
+  delay(2000);
 }
 
 void loop() {
@@ -67,6 +75,7 @@ void loop() {
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
 
+/*
   aX = a.acceleration.x - OFFSET_A_X;
   aY = a.acceleration.y - OFFSET_A_Y;
   aZ = a.acceleration.z - OFFSET_A_Z;
@@ -74,29 +83,40 @@ void loop() {
   wX = g.gyro.x - OFFSET_W_X;
   wY = g.gyro.y - OFFSET_W_Y;
   wZ = g.gyro.z - OFFSET_W_Z;
+*/
 
+  // Offsets automáticos
+  aX = a.acceleration.x - eaX;
+  aY = a.acceleration.y - eaY;
+  aZ = a.acceleration.z - eaZ;
+
+  wX = g.gyro.x - ewX;
+  wY = g.gyro.y - ewY;
+  wZ = g.gyro.z - ewZ;
+
+  // Salida del filtro complementario
   oX = alpha*(oX+dt*wX) + beta*aX;
   oY = alpha*(oY+dt*wY) + beta*aY;
   oZ = alpha*(oZ+dt*wZ) + beta*aZ;
 
-  pitch= atan2(oX,oZ);
-  roll = atan2(oY,oZ);
+  pitch= atan2(oY,oZ);
+  roll = atan2(oX,oZ);
 
   /* Print out the values */
   Serial.print(oX);
-  Serial.print(",");
+  Serial.print("\t");
   Serial.print(oY);
-  Serial.print(",");
+  Serial.print("\t");
   Serial.print(oZ);
-  Serial.print(", ");
+  Serial.print("\t");
   Serial.print(wX);
-  Serial.print(",");
+  Serial.print("\t");
   Serial.print(wY);
-  Serial.print(",");
+  Serial.print("\t");
   Serial.print(wZ);
-  Serial.print(", ");
+  Serial.print("\t");
   Serial.print(pitch);
-  Serial.print(",");
+  Serial.print("\t");
   Serial.print(roll);
   Serial.println("");
 
@@ -106,13 +126,14 @@ void loop() {
 
 void calc_error()
 {
-  eaX = 0;
-  eaY = 0;
-  eaZ = 0;
+  Serial.println("Calculando offsets");
+  eaX = 0.0;
+  eaY = 0.0;
+  eaZ = 0.0;
 
-  ewX = 0;
-  ewY = 0;
-  ewZ = 0;
+  ewX = 0.0;
+  ewY = 0.0;
+  ewZ = 0.0;
   while(i<samples)
   {
     sensors_event_t a, g, temp;
@@ -126,17 +147,53 @@ void calc_error()
     ewY += g.gyro.y;
     ewZ += g.gyro.z;
 
+  // Serial.print(eaX);
+  // Serial.print("\t");
+  // Serial.print(eaY);
+  // Serial.print("\t");
+  // Serial.print(eaZ);
+  // Serial.print("\t");
+
+  // Serial.print(ewX);
+  // Serial.print("\t");
+  // Serial.print(ewY);
+  // Serial.print("\t");
+  // Serial.print(ewZ);
+  // Serial.print("\t");
+
+  // Serial.println("");
+
     i++;
     delay(10);
   }
-  eaX /= samples;
-  eaY /= samples;
-  eaZ /= samples;
+  eaX = eaX/samples;
+  eaY = eaY/samples;
+  eaZ = eaZ/samples - 9.81;
 
-  ewX /= samples;
-  ewY /= samples;
-  ewZ /= samples;
+  ewX = ewX/samples;
+  ewY = ewY/samples;
+  ewZ = ewZ/samples;
   
+  Serial.println("Offsets calculados:");
+  Serial.println("a.x\ta.y\ta.z\tg.x\tg.y\tg.z");
+
+  Serial.print(eaX);
+  Serial.print("\t");
+  Serial.print(eaY);
+  Serial.print("\t");
+  Serial.print(eaZ);
+  Serial.print("\t");
+
+  Serial.print(ewX);
+  Serial.print("\t");
+  Serial.print(ewY);
+  Serial.print("\t");
+  Serial.print(ewZ);
+  Serial.print("\t");
+
+  Serial.println("");
+
+  delay(2000);
 }
 
 
